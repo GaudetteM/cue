@@ -2,8 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { Goal } from '../types/goal';
-import { GoalRecurrence } from '../types/goalRecurrence';
+import { Goal, GoalRecurrence, GoalStatus } from '../types/goal';
 
 interface GoalStore {
   goals: Goal[];
@@ -18,7 +17,7 @@ interface GoalStore {
 
   updateGoal: (id: string, updates: Partial<Goal>) => void;
 
-  toggleGoalCompletion: (id: string, date: string) => void;
+  setGoalStatus: (id: string, date: string, status: GoalStatus) => void;
 
   deleteGoal: (id: string) => void;
 }
@@ -39,7 +38,7 @@ export const useGoalStore = create<GoalStore>()(
               category,
               recurrence,
               recurrenceDays,
-              completedDates: [],
+              dailyStatus: {},
               createdAt: new Date().toISOString(),
             },
           ],
@@ -57,22 +56,20 @@ export const useGoalStore = create<GoalStore>()(
           ),
         })),
 
-      toggleGoalCompletion: (id, date) =>
+      setGoalStatus: (id, date, status) =>
         set(state => ({
           goals: state.goals.map(goal => {
             if (goal.id !== id) {
               return goal;
             }
 
-            const completedDates = goal.completedDates ?? [];
-
-            const completed = completedDates.includes(date);
-
             return {
               ...goal,
-              completedDates: completed
-                ? completedDates.filter(completedDate => completedDate !== date)
-                : [...completedDates, date],
+
+              dailyStatus: {
+                ...goal.dailyStatus,
+                [date]: status,
+              },
             };
           }),
         })),
@@ -82,8 +79,10 @@ export const useGoalStore = create<GoalStore>()(
           goals: state.goals.filter(goal => goal.id !== id),
         })),
     }),
+
     {
       name: 'cue-goals',
+
       storage: createJSONStorage(() => AsyncStorage),
     },
   ),

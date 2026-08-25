@@ -4,186 +4,244 @@ import {
   Pressable,
   SafeAreaView,
   ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
+import { Plus } from 'lucide-react-native';
 
-import { AddGoalSheet } from '../components/AddGoalSheet';
 import { GoalCard } from '../components/GoalCard';
+import { WeekStrip } from '../components/WeekStrip';
+import { AddGoalSheet } from '../components/AddGoalSheet';
+
+import { ViewMode, ViewToggle } from '../components/ViewToggle';
+import { GoalBoard } from '../components/GoalBoard';
 
 import { useGoalStore } from '../store/goalStore';
-
 import { Goal } from '../types/goal';
 
-import { occursOnDate, toDateKey } from '../utils/recurrence';
-
 import { colors, radius, spacing } from '../theme/theme';
+
+function toDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
 
 function formatDate(date: Date) {
   return date.toLocaleDateString('en-US', {
     weekday: 'long',
-    month: 'short',
+    month: 'long',
     day: 'numeric',
   });
 }
 
-export default function TodayScreen() {
+function occursOnDate(goal: Goal, date: Date) {
+  const goalDate = new Date(`${goal.date}T12:00:00`);
+
+  const targetKey = toDateKey(date);
+  const goalKey = toDateKey(goalDate);
+
+  if (goal.recurrence === 'none') {
+    return goalKey === targetKey;
+  }
+
+  if (date < goalDate) {
+    return false;
+  }
+
+  if (goal.recurrence === 'daily') {
+    return true;
+  }
+
+  if (goal.recurrence === 'weekly') {
+    const day = date.getDay() === 0 ? 7 : date.getDay();
+
+    return goal.recurrenceDays?.includes(day) ?? false;
+  }
+
+  if (goal.recurrence === 'monthly') {
+    return goal.recurrenceDays?.includes(date.getDate()) ?? false;
+  }
+
+  return false;
+}
+
+export function TodayScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
-  const [showAddGoal, setShowAddGoal] = useState(false);
+  const [sheetVisible, setSheetVisible] = useState(false);
 
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
 
-  const allGoals = useGoalStore(state => state.goals);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
-  const toggleGoalCompletion = useGoalStore(
-    state => state.toggleGoalCompletion,
-  );
+  const goals = useGoalStore(state => state.goals);
+
+  const setGoalStatus = useGoalStore(state => state.setGoalStatus);
 
   const deleteGoal = useGoalStore(state => state.deleteGoal);
 
-  const dateKey = toDateKey(selectedDate);
+  const dateKey = useMemo(() => toDateKey(selectedDate), [selectedDate]);
 
-  const goals = useMemo(
-    () => allGoals.filter(goal => occursOnDate(goal, selectedDate)),
-    [allGoals, selectedDate],
+  const todaysGoals = useMemo(
+    () => goals.filter(goal => occursOnDate(goal, selectedDate)),
+    [goals, selectedDate],
   );
 
-  const completedCount = goals.filter(goal =>
-    goal.completedDates.includes(dateKey),
+  const completedCount = todaysGoals.filter(
+    goal => goal.dailyStatus[dateKey] === 'done',
   ).length;
 
-  const changeDate = (amount: number) => {
-    setSelectedDate(current => {
-      const next = new Date(current);
+  const doingCount = todaysGoals.filter(
+    goal => goal.dailyStatus[dateKey] === 'doing',
+  ).length;
 
-      next.setDate(next.getDate() + amount);
+  const progress =
+    todaysGoals.length === 0 ? 0 : completedCount / todaysGoals.length;
 
-      return next;
-    });
+  const handleGoalPress = (goal: Goal) => {
+    const currentStatus = goal.dailyStatus[dateKey] ?? 'todo';
+
+    const nextStatus =
+      currentStatus === 'todo'
+        ? 'doing'
+        : currentStatus === 'doing'
+        ? 'done'
+        : 'todo';
+
+    setGoalStatus(goal.id, dateKey, nextStatus);
   };
 
   const handleAddGoal = () => {
     setEditingGoal(null);
-    setShowAddGoal(true);
+    setSheetVisible(true);
   };
 
   const handleEditGoal = (goal: Goal) => {
     setEditingGoal(goal);
-    setShowAddGoal(true);
+    setSheetVisible(true);
   };
 
-  const handleCloseEditor = () => {
-    setShowAddGoal(false);
+  const handleCloseSheet = () => {
+    setSheetVisible(false);
     setEditingGoal(null);
   };
 
-  const handleGoalPress = (goal: Goal) => {
-    toggleGoalCompletion(goal.id, dateKey);
-  };
-
-  const progress = goals.length > 0 ? completedCount / goals.length : 0;
-
-  const isToday = toDateKey(new Date()) === dateKey;
-
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
-
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={styles.container}>
+        {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.logo}>CUE</Text>
+          <View>
+            <Text style={styles.logo}>CUE</Text>
 
-          <Text style={styles.subtitle}>KEEP MOVING.</Text>
-        </View>
-
-        <View style={styles.dateNavigation}>
-          <Pressable onPress={() => changeDate(-1)} style={styles.dateButton}>
-            <ChevronLeft size={22} color={colors.textSecondary} />
-          </Pressable>
-
-          <View style={styles.dateCenter}>
-            <Text style={styles.date}>{formatDate(selectedDate)}</Text>
-
-            {isToday && <Text style={styles.todayLabel}>TODAY</Text>}
+            <Text style={styles.subtitle}>KEEP MOVING.</Text>
           </View>
 
-          <Pressable onPress={() => changeDate(1)} style={styles.dateButton}>
-            <ChevronRight size={22} color={colors.textSecondary} />
+          <Pressable onPress={handleAddGoal} style={styles.addButton}>
+            <Plus size={22} color={colors.background} strokeWidth={2.5} />
           </Pressable>
         </View>
 
-        <View style={styles.progressSection}>
-          <View style={styles.progressHeader}>
-            <Text style={styles.progressText}>
-              {completedCount} OF {goals.length} COMPLETE
-            </Text>
+        {/* Week selector */}
+        <WeekStrip
+          selectedDate={selectedDate}
+          goals={goals}
+          onSelectDate={setSelectedDate}
+        />
 
-            {goals.length > 0 && (
+        <ViewToggle value={viewMode} onChange={setViewMode} />
+
+        {/* Selected date */}
+        <Text style={styles.selectedDate}>{formatDate(selectedDate)}</Text>
+
+        {/* Progress */}
+        {todaysGoals.length > 0 && (
+          <View style={styles.progressCard}>
+            <View style={styles.progressHeader}>
+              <View>
+                <Text style={styles.progressTitle}>TODAY</Text>
+
+                <Text style={styles.progressCount}>
+                  {completedCount} OF {todaysGoals.length} COMPLETE
+                </Text>
+              </View>
+
               <Text style={styles.progressPercent}>
                 {Math.round(progress * 100)}%
               </Text>
+            </View>
+
+            <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${progress * 100}%`,
+                  },
+                ]}
+              />
+            </View>
+
+            {doingCount > 0 && (
+              <Text style={styles.doingCount}>
+                {doingCount} {doingCount === 1 ? 'goal' : 'goals'} in progress
+              </Text>
             )}
           </View>
+        )}
 
-          <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${progress * 100}%`,
-                },
-              ]}
-            />
-          </View>
-        </View>
+        {viewMode === 'board' ? (
+          <GoalBoard
+            goals={todaysGoals}
+            dateKey={dateKey}
+            onGoalPress={handleGoalPress}
+          />
+        ) : (
+          <ScrollView
+            style={styles.list}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {todaysGoals.length === 0 ? (
+              <View style={styles.emptyState}>
+                <View style={styles.emptyIcon}>
+                  <Plus size={24} color={colors.accent} />
+                </View>
 
-        <View style={styles.goalsSection}>
-          {goals.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>Nothing on the cue.</Text>
+                <Text style={styles.emptyTitle}>Nothing on your cue</Text>
 
-              <Text style={styles.emptyText}>
-                Add something you want to get done.
-              </Text>
-            </View>
-          ) : (
-            goals.map(goal => (
-              <GoalCard
-                key={goal.id}
-                goal={goal}
-                completed={goal.completedDates.includes(dateKey)}
-                onPress={() => handleGoalPress(goal)}
-                onEdit={() => handleEditGoal(goal)}
-                onDelete={() => deleteGoal(goal.id)}
-              />
-            ))
-          )}
-        </View>
+                <Text style={styles.emptyText}>
+                  Add something you want to get done today.
+                </Text>
 
-        <Pressable
-          onPress={handleAddGoal}
-          style={({ pressed }) => [
-            styles.addButton,
-            pressed && styles.addButtonPressed,
-          ]}
-        >
-          <Plus size={20} color={colors.background} strokeWidth={2.5} />
-
-          <Text style={styles.addButtonText}>Add goal</Text>
-        </Pressable>
-      </ScrollView>
+                <Pressable onPress={handleAddGoal} style={styles.emptyButton}>
+                  <Text style={styles.emptyButtonText}>Add a goal</Text>
+                </Pressable>
+              </View>
+            ) : (
+              todaysGoals.map(goal => (
+                <GoalCard
+                  key={goal.id}
+                  goal={goal}
+                  status={goal.dailyStatus[dateKey] ?? 'todo'}
+                  onPress={() => handleGoalPress(goal)}
+                  onEdit={() => handleEditGoal(goal)}
+                  onDelete={() => deleteGoal(goal.id)}
+                />
+              ))
+            )}
+          </ScrollView>
+        )}
+      </View>
 
       <AddGoalSheet
-        visible={showAddGoal}
-        onClose={handleCloseEditor}
+        visible={sheetVisible}
+        onClose={handleCloseSheet}
         date={dateKey}
         goal={editingGoal}
       />
@@ -197,94 +255,88 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
 
-  content: {
-    flexGrow: 1,
+  container: {
+    flex: 1,
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xl,
   },
 
   header: {
-    paddingTop: spacing.lg,
-    marginBottom: spacing.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: spacing.md,
+    marginBottom: spacing.lg,
   },
 
   logo: {
     color: colors.text,
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: '900',
-    letterSpacing: 4,
+    letterSpacing: 2,
   },
 
   subtitle: {
     color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 9,
+    fontWeight: '800',
     letterSpacing: 2,
-    marginTop: 4,
+    marginTop: 1,
   },
 
-  dateNavigation: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xl,
-  },
-
-  dateButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: colors.surface,
+  addButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
-  dateCenter: {
-    alignItems: 'center',
-  },
-
-  date: {
+  selectedDate: {
     color: colors.text,
     fontSize: 21,
     fontWeight: '700',
+    marginBottom: spacing.md,
   },
 
-  todayLabel: {
-    color: colors.accent,
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.5,
-    marginTop: 4,
-  },
-
-  progressSection: {
-    marginBottom: spacing.xl,
+  progressCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
   },
 
   progressHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: spacing.sm,
   },
 
-  progressText: {
+  progressTitle: {
     color: colors.textMuted,
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: '800',
-    letterSpacing: 1.2,
+    letterSpacing: 1.5,
+    marginBottom: 3,
+  },
+
+  progressCount: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '700',
   },
 
   progressPercent: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '700',
+    color: colors.accent,
+    fontSize: 24,
+    fontWeight: '800',
   },
 
   progressTrack: {
     height: 5,
+    backgroundColor: colors.border,
     borderRadius: 3,
-    backgroundColor: colors.surface,
     overflow: 'hidden',
   },
 
@@ -294,45 +346,60 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
 
-  goalsSection: {
+  doingCount: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 8,
+  },
+
+  list: {
     flex: 1,
+  },
+
+  listContent: {
+    paddingBottom: 120,
   },
 
   emptyState: {
     alignItems: 'center',
-    paddingVertical: spacing.xl * 2,
+    paddingTop: spacing.xxl,
+  },
+
+  emptyIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
   },
 
   emptyTitle: {
     color: colors.text,
     fontSize: 18,
     fontWeight: '700',
-    marginBottom: spacing.xs,
+    marginBottom: 6,
   },
 
   emptyText: {
     color: colors.textMuted,
     fontSize: 14,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
   },
 
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.accent,
+  emptyButton: {
+    backgroundColor: colors.surfaceElevated,
     borderRadius: radius.md,
-    paddingVertical: 16,
-    marginTop: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 12,
   },
 
-  addButtonPressed: {
-    opacity: 0.75,
-  },
-
-  addButtonText: {
-    color: colors.background,
-    fontSize: 16,
-    fontWeight: '800',
+  emptyButtonText: {
+    color: colors.accent,
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

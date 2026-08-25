@@ -1,4 +1,6 @@
-import { GoalRecurrence } from './goalRecurrence';
+export type GoalRecurrence = 'none' | 'daily' | 'weekly' | 'monthly';
+
+export type GoalStatus = 'todo' | 'doing' | 'done';
 
 export interface Goal {
   id: string;
@@ -6,13 +8,8 @@ export interface Goal {
   category?: string;
 
   /**
-   * The date the goal was created/started.
-   *
-   * For non-recurring goals, this is the date
-   * the goal belongs to.
-   *
-   * For recurring goals, this is the date
-   * recurrence begins.
+   * Date the goal starts.
+   * For a non-recurring goal, this is its date.
    */
   date: string;
 
@@ -30,12 +27,16 @@ export interface Goal {
   recurrenceDays?: number[];
 
   /**
-   * Dates on which this goal was completed.
+   * Per-day state.
    *
    * Example:
-   * ['2026-08-24', '2026-08-26']
+   *
+   * {
+   *   "2026-08-24": "done",
+   *   "2026-08-25": "doing"
+   * }
    */
-  completedDates: string[];
+  dailyStatus: Record<string, GoalStatus>;
 
   createdAt: string;
 }
