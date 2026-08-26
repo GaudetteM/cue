@@ -1,9 +1,9 @@
 import React from 'react';
 
-import { TodayScreen } from './src/screens/TodayScreen';
+import { DashboardScreen } from './src/screens/DashboardScreen';
 
 function App() {
-  return <TodayScreen />;
+  return <DashboardScreen />;
 }
 
 export default App;

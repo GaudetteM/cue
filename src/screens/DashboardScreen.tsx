@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { Plus } from 'lucide-react-native';
+import { Calendar, Plus } from 'lucide-react-native';
 
 import { GoalCard } from '../components/GoalCard';
 import { WeekStrip } from '../components/WeekStrip';
@@ -22,6 +22,8 @@ import { useGoalStore } from '../store/goalStore';
 import { Goal } from '../types/goal';
 
 import { colors, radius, spacing } from '../theme/theme';
+import { CalendarSheet } from '../components/CalendarSheet';
+import { getWeekday } from '../utils/date';
 
 function toDateKey(date: Date) {
   const year = date.getFullYear();
@@ -58,7 +60,7 @@ function occursOnDate(goal: Goal, date: Date) {
   }
 
   if (goal.recurrence === 'weekly') {
-    const day = date.getDay() === 0 ? 7 : date.getDay();
+    const day = getWeekday(date);
 
     return goal.recurrenceDays?.includes(day) ?? false;
   }
@@ -70,7 +72,7 @@ function occursOnDate(goal: Goal, date: Date) {
   return false;
 }
 
-export function TodayScreen() {
+export function DashboardScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   const [sheetVisible, setSheetVisible] = useState(false);
@@ -78,6 +80,8 @@ export function TodayScreen() {
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
 
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+
+  const [calendarVisible, setCalendarVisible] = useState(false);
 
   const goals = useGoalStore(state => state.goals);
 
@@ -152,12 +156,40 @@ export function TodayScreen() {
           selectedDate={selectedDate}
           goals={goals}
           onSelectDate={setSelectedDate}
+          onPreviousWeek={() => {
+            setSelectedDate(current => {
+              const date = new Date(current);
+
+              date.setDate(date.getDate() - 7);
+
+              return date;
+            });
+          }}
+          onNextWeek={() => {
+            setSelectedDate(current => {
+              const date = new Date(current);
+
+              date.setDate(date.getDate() + 7);
+
+              return date;
+            });
+          }}
         />
 
-        <ViewToggle value={viewMode} onChange={setViewMode} />
+        <View style={styles.dateHeader}>
+          <Text style={styles.selectedDate}>{formatDate(selectedDate)}</Text>
 
-        {/* Selected date */}
-        <Text style={styles.selectedDate}>{formatDate(selectedDate)}</Text>
+          <Pressable
+            onPress={() => setCalendarVisible(true)}
+            style={styles.calendarButton}
+          >
+            <Calendar size={19} color={colors.text} />
+          </Pressable>
+        </View>
+
+        {todaysGoals.length > 0 && (
+          <ViewToggle value={viewMode} onChange={setViewMode} />
+        )}
 
         {/* Progress */}
         {todaysGoals.length > 0 && (
@@ -209,10 +241,6 @@ export function TodayScreen() {
           >
             {todaysGoals.length === 0 ? (
               <View style={styles.emptyState}>
-                <View style={styles.emptyIcon}>
-                  <Plus size={24} color={colors.accent} />
-                </View>
-
                 <Text style={styles.emptyTitle}>Nothing on your cue</Text>
 
                 <Text style={styles.emptyText}>
@@ -239,6 +267,13 @@ export function TodayScreen() {
         )}
       </View>
 
+      <CalendarSheet
+        visible={calendarVisible}
+        selectedDate={selectedDate}
+        goals={goals}
+        onSelectDate={setSelectedDate}
+        onClose={() => setCalendarVisible(false)}
+      />
       <AddGoalSheet
         visible={sheetVisible}
         onClose={handleCloseSheet}
@@ -283,6 +318,22 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
 
+  dateHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
+
+  calendarButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   addButton: {
     width: 44,
     height: 44,
@@ -296,7 +347,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 21,
     fontWeight: '700',
-    marginBottom: spacing.md,
+    // marginBottom: spacing.md,
   },
 
   progressCard: {

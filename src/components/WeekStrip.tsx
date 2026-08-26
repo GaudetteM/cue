@@ -2,120 +2,100 @@ import React, { useMemo } from 'react';
 
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Check } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 
 import { Goal } from '../types/goal';
-import { occursOnDate, toDateKey } from '../utils/recurrence';
 
-import { colors, radius, spacing } from '../theme/theme';
+import { colors, spacing } from '../theme/theme';
+
+import { getWeekDays, toDateKey } from '../utils/date';
+import { occursOnDate } from '../utils/recurrence';
+
+/**
+ * Determines whether any goal occurs on the given date.
+ */
+function getHasGoals(goals: Goal[], date: Date): boolean {
+  return goals.some(goal => occursOnDate(goal, date));
+}
 
 interface Props {
   selectedDate: Date;
   goals: Goal[];
   onSelectDate: (date: Date) => void;
+  onPreviousWeek: () => void;
+  onNextWeek: () => void;
 }
 
-function startOfWeek(date: Date) {
-  const result = new Date(date);
-  const day = result.getDay();
+export function WeekStrip({
+  selectedDate,
+  goals,
+  onSelectDate,
+  onPreviousWeek,
+  onNextWeek,
+}: Props) {
+  const week = useMemo(() => getWeekDays(selectedDate), [selectedDate]);
 
-  // Monday = first day of week
-  const diff = day === 0 ? -6 : 1 - day;
-
-  result.setDate(result.getDate() + diff);
-  result.setHours(12, 0, 0, 0);
-
-  return result;
-}
-
-function isSameDay(first: Date, second: Date) {
-  return toDateKey(first) === toDateKey(second);
-}
-
-export function WeekStrip({ selectedDate, goals, onSelectDate }: Props) {
-  const today = useMemo(() => new Date(), []);
-
-  const days = useMemo(() => {
-    const start = startOfWeek(selectedDate);
-
-    return Array.from({ length: 7 }, (_, index) => {
-      const date = new Date(start);
-
-      date.setDate(start.getDate() + index);
-
-      return date;
-    });
-  }, [selectedDate]);
+  const weekLabel = `${week[0].toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  })} — ${week[6].toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  })}`;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.month}>
-        {selectedDate
-          .toLocaleDateString('en-US', {
-            month: 'long',
-            year: 'numeric',
-          })
-          .toUpperCase()}
-      </Text>
+    <View>
+      {/* Week navigation */}
+      <View style={styles.header}>
+        <Pressable
+          onPress={onPreviousWeek}
+          style={styles.arrowButton}
+          hitSlop={8}
+        >
+          <ChevronLeft size={20} color={colors.text} />
+        </Pressable>
 
+        <Text style={styles.weekLabel}>{weekLabel}</Text>
+
+        <Pressable onPress={onNextWeek} style={styles.arrowButton} hitSlop={8}>
+          <ChevronRight size={20} color={colors.text} />
+        </Pressable>
+      </View>
+
+      {/* Days */}
       <View style={styles.days}>
-        {days.map(day => {
-          const dateKey = toDateKey(day);
+        {week.map(date => {
+          const selected = toDateKey(date) === toDateKey(selectedDate);
 
-          const selected = isSameDay(day, selectedDate);
+          const hasGoals = getHasGoals(goals, date);
 
-          const todaySelected = isSameDay(day, today);
-
-          const dayGoals = goals.filter(goal => occursOnDate(goal, day));
-
-          const completed = dayGoals.filter(
-            goal => goal.dailyStatus[dateKey] === 'done',
-          ).length;
-
-          const hasGoals = dayGoals.length > 0;
-
-          const allComplete = hasGoals && completed === dayGoals.length;
+          const weekday = date.toLocaleDateString(undefined, {
+            weekday: 'short',
+          });
 
           return (
             <Pressable
-              key={dateKey}
-              onPress={() => onSelectDate(new Date(day))}
-              style={[styles.day, selected && styles.daySelected]}
+              key={toDateKey(date)}
+              onPress={() => onSelectDate(date)}
+              style={styles.dayContainer}
             >
-              <Text style={[styles.weekday, selected && styles.selectedText]}>
-                {day
-                  .toLocaleDateString('en-US', {
-                    weekday: 'short',
-                  })
-                  .slice(0, 1)}
+              <Text
+                style={[styles.dayName, selected && styles.selectedDayName]}
+              >
+                {weekday.slice(0, 1)}
               </Text>
 
-              <Text style={[styles.number, selected && styles.selectedText]}>
-                {day.getDate()}
-              </Text>
-
-              <View style={styles.indicator}>
-                {allComplete ? (
-                  <View style={styles.completeIndicator}>
-                    <Check size={9} color={colors.background} strokeWidth={4} />
-                  </View>
-                ) : hasGoals ? (
-                  <View
-                    style={[
-                      styles.goalIndicator,
-                      completed > 0 && styles.goalIndicatorProgress,
-                    ]}
-                  />
-                ) : (
-                  <View style={styles.emptyIndicator} />
-                )}
+              <View
+                style={[styles.dayCircle, selected && styles.selectedCircle]}
+              >
+                <Text
+                  style={[styles.dayNumber, selected && styles.selectedDayText]}
+                >
+                  {date.getDate()}
+                </Text>
               </View>
 
-              {todaySelected && (
-                <View
-                  style={[styles.todayDot, selected && styles.todayDotSelected]}
-                />
-              )}
+              {hasGoals && <View style={styles.goalDot} />}
             </Pressable>
           );
         })}
@@ -125,16 +105,27 @@ export function WeekStrip({ selectedDate, goals, onSelectDate }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: spacing.lg,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
   },
 
-  month: {
+  weekLabel: {
     color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.5,
-    marginBottom: spacing.sm,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+
+  arrowButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   days: {
@@ -142,82 +133,49 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 
-  day: {
-    width: 40,
-    height: 68,
-    borderRadius: radius.md,
+  dayContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
+    width: 38,
   },
 
-  daySelected: {
-    backgroundColor: colors.accent,
-  },
-
-  weekday: {
+  dayName: {
     color: colors.textMuted,
     fontSize: 10,
     fontWeight: '800',
-    marginBottom: 4,
+    marginBottom: 6,
   },
 
-  number: {
+  selectedDayName: {
+    color: colors.accent,
+  },
+
+  dayCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  selectedCircle: {
+    backgroundColor: colors.accent,
+  },
+
+  dayNumber: {
     color: colors.text,
-    fontSize: 17,
+    fontSize: 14,
     fontWeight: '700',
   },
 
-  selectedText: {
+  selectedDayText: {
     color: colors.background,
   },
 
-  indicator: {
-    height: 12,
-    marginTop: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  goalIndicator: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: colors.border,
-  },
-
-  goalIndicatorProgress: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.accent,
-  },
-
-  completeIndicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.success,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  emptyIndicator: {
+  goalDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'transparent',
-  },
-
-  todayDot: {
-    position: 'absolute',
-    bottom: 3,
-    width: 3,
-    height: 3,
-    borderRadius: 2,
     backgroundColor: colors.accent,
-  },
-
-  todayDotSelected: {
-    backgroundColor: colors.background,
+    marginTop: 4,
   },
 });

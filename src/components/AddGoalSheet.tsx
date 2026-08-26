@@ -24,7 +24,7 @@ interface Props {
   goal: Goal | null;
 }
 
-const categories = ['Contract', 'Personal', 'Other'];
+const categories = ['Reminder', 'Goal', 'Task', 'Other'];
 
 const weekdays = [
   { value: 1, label: 'M' },
