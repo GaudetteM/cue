@@ -9,7 +9,7 @@ import { colors, radius, spacing } from '../theme/theme';
 interface Props {
   goals: Goal[];
   dateKey: string;
-  onGoalPress: (goal: Goal) => void;
+  onGoalPressed: (goal: Goal) => void;
 }
 
 const columns: {
@@ -30,7 +30,7 @@ const columns: {
   },
 ];
 
-export function GoalBoard({ goals, dateKey, onGoalPress }: Props) {
+export function GoalBoard({ goals, dateKey, onGoalPressed }: Props) {
   return (
     <ScrollView
       horizontal
@@ -60,7 +60,7 @@ export function GoalBoard({ goals, dateKey, onGoalPress }: Props) {
               columnGoals.map(goal => (
                 <Pressable
                   key={goal.id}
-                  onPress={() => onGoalPress(goal)}
+                  onPress={() => onGoalPressed(goal)}
                   style={({ pressed }) => [
                     styles.card,
                     pressed && styles.cardPressed,

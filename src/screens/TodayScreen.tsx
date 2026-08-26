@@ -199,7 +199,7 @@ export function TodayScreen() {
           <GoalBoard
             goals={todaysGoals}
             dateKey={dateKey}
-            onGoalPress={handleGoalPress}
+            onGoalPressed={handleGoalPress}
           />
         ) : (
           <ScrollView
