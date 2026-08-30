@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 
-import { Goal } from '../types/goal';
+import { Goal } from '../types';
 
 import { colors, spacing } from '../theme/theme';
 

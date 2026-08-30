@@ -4,7 +4,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ChevronLeft, ChevronRight, X } from 'lucide-react-native';
 
-import { Goal } from '../types/goal';
+import { Goal } from '../types';
 
 import { colors, radius, spacing } from '../theme/theme';
 import { getWeekday, isSameDay } from '../utils/date';

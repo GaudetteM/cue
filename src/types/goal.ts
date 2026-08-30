@@ -1,6 +1,5 @@
-export type GoalRecurrence = 'none' | 'daily' | 'weekly' | 'monthly';
-
-export type GoalStatus = 'todo' | 'doing' | 'done';
+import { GoalRecurrence } from './GoalRecurrence';
+import { GoalStatus } from './GoalStatus';
 
 export interface Goal {
   id: string;

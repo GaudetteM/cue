@@ -1,0 +1,1 @@
+export type GoalStatus = 'todo' | 'doing' | 'done';

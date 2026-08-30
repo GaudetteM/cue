@@ -1,4 +1,4 @@
-export type Weekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+import { Weekday } from '../types';
 
 /**
  * Converts a Date into Cue's local YYYY-MM-DD date key.

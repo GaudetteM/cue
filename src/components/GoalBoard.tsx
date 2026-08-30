@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Goal, GoalStatus } from '../types/goal';
+import { Goal, GoalStatus } from '../types';
 
 import { colors, radius, spacing } from '../theme/theme';
 

@@ -1,4 +1,4 @@
-import { Goal } from '../types/goal';
+import { Goal } from '../types/Goal';
 import { getWeekday, toDateKey } from './date';
 
 /**

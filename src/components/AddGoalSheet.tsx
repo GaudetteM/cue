@@ -15,7 +15,7 @@ import { X } from 'lucide-react-native';
 
 import { colors, radius, spacing } from '../theme/theme';
 import { useGoalStore } from '../store/goalStore';
-import { Goal, GoalRecurrence } from '../types/goal';
+import { Goal, GoalRecurrence } from '../types';
 
 interface Props {
   visible: boolean;

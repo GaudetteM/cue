@@ -19,7 +19,7 @@ import { ViewMode, ViewToggle } from '../components/ViewToggle';
 import { GoalBoard } from '../components/GoalBoard';
 
 import { useGoalStore } from '../store/goalStore';
-import { Goal } from '../types/goal';
+import { Goal } from '../types/Goal';
 
 import { colors, radius, spacing } from '../theme/theme';
 import { CalendarSheet } from '../components/CalendarSheet';
