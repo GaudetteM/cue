@@ -16,6 +16,7 @@ import { X } from 'lucide-react-native';
 import { colors, radius, spacing } from '../theme/theme';
 import { useGoalStore } from '../store/goalStore';
 import { Goal, GoalRecurrence } from '../types';
+import { doesWeekStartOnSunday, getWeekday } from '../utils/date';
 
 interface Props {
   visible: boolean;
@@ -26,21 +27,31 @@ interface Props {
 
 const categories = ['Reminder', 'Goal', 'Task', 'Other'];
 
-const weekdays = [
-  { value: 1, label: 'M' },
-  { value: 2, label: 'T' },
-  { value: 3, label: 'W' },
-  { value: 4, label: 'T' },
-  { value: 5, label: 'F' },
-  { value: 6, label: 'S' },
-  { value: 7, label: 'S' },
-];
+const weekdays = doesWeekStartOnSunday()
+  ? [
+      { value: 7, label: 'S' },
+      { value: 1, label: 'M' },
+      { value: 2, label: 'T' },
+      { value: 3, label: 'W' },
+      { value: 4, label: 'T' },
+      { value: 5, label: 'F' },
+      { value: 6, label: 'S' },
+    ]
+  : [
+      { value: 1, label: 'M' },
+      { value: 2, label: 'T' },
+      { value: 3, label: 'W' },
+      { value: 4, label: 'T' },
+      { value: 5, label: 'F' },
+      { value: 6, label: 'S' },
+      { value: 7, label: 'S' },
+    ];
 
 const monthDays = Array.from({ length: 31 }, (_, index) => index + 1);
 
 export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<string>();
+  const [category, setCategory] = useState<string | undefined>('Goal');
 
   const [recurrence, setRecurrence] = useState<GoalRecurrence>('none');
 
@@ -64,7 +75,7 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
     }
 
     setTitle(goal?.title ?? '');
-    setCategory(goal?.category);
+    setCategory(goal?.category ?? 'Goal');
     setRecurrence(goal?.recurrence ?? 'none');
     setRecurrenceDays(goal?.recurrenceDays ?? []);
 
@@ -111,6 +122,10 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
     });
   };
 
+  /**
+   * Updates recurrence settings and initializes
+   * the appropriate recurrence days when needed.
+   */
   const handleRecurrenceChange = (value: GoalRecurrence) => {
     setRecurrence(value);
 
@@ -125,19 +140,17 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
     }
 
     if (value === 'weekly' && recurrenceDays.length === 0) {
-      const currentDay = new Date(date).getDay();
+      const selectedDate = new Date(`${date}T12:00:00`);
 
-      const mondayBased = currentDay === 0 ? 7 : currentDay;
-
-      setRecurrenceDays([mondayBased]);
+      setRecurrenceDays([getWeekday(selectedDate)]);
 
       return;
     }
 
     if (value === 'monthly' && recurrenceDays.length === 0) {
-      const day = new Date(`${date}T12:00:00`).getDate();
+      const selectedDate = new Date(`${date}T12:00:00`);
 
-      setRecurrenceDays([day]);
+      setRecurrenceDays([selectedDate.getDate()]);
     }
   };
 

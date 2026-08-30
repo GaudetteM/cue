@@ -1,13 +1,25 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  Dimensions,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import { ChevronLeft, ChevronRight, X } from 'lucide-react-native';
 
 import { Goal } from '../types';
-
 import { colors, radius, spacing } from '../theme/theme';
-import { getWeekday, isSameDay } from '../utils/date';
+import {
+  doesWeekStartOnSunday,
+  getWeekdayLabels,
+  isSameDay,
+} from '../utils/date';
+import { occursOnDate } from '../utils/recurrence';
 
 interface Props {
   visible: boolean;
@@ -17,62 +29,29 @@ interface Props {
   onClose: () => void;
 }
 
+const SHEET_HEIGHT = Dimensions.get('window').height;
+
+const ANIMATION_DURATION = 220;
+
 /**
- * Calculates the number of days in a given month and year.
- * @param year The year of the month.
- * @param month The month (0-11).
- * @returns The number of days in the month.
+ * Returns the number of days in a given month.
  */
-function getDaysInMonth(year: number, month: number) {
+function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
 }
 
 /**
- * Gets the first day of the week for a given month and year.
- * @param year The year of the month.
- * @param month The month (0-11).
- * @returns The first day of the week for the given month, with Sunday as 0.
+ * Returns the number of leading empty cells needed
+ * before the first day of a month.
  */
-function getFirstDayOfMonth(year: number, month: number) {
+function getFirstDayOfMonth(year: number, month: number): number {
   const day = new Date(year, month, 1).getDay();
+
+  if (doesWeekStartOnSunday()) {
+    return day;
+  }
+
   return day === 0 ? 6 : day - 1;
-}
-
-/**
- * Determines if a goal occurs on a given date, taking into account its recurrence pattern.
- * @param goal The goal to check.
- * @param date The date to check against.
- * @returns True if the goal occurs on the given date, false otherwise.
- */
-function occursOnDate(goal: Goal, date: Date) {
-  const goalDate = new Date(`${goal.date}T12:00:00`);
-
-  if (
-    date <
-    new Date(goalDate.getFullYear(), goalDate.getMonth(), goalDate.getDate())
-  ) {
-    return false;
-  }
-
-  if (goal.recurrence === 'none') {
-    return isSameDay(goalDate, date);
-  }
-
-  if (goal.recurrence === 'daily') {
-    return true;
-  }
-
-  if (goal.recurrence === 'weekly') {
-    const day = getWeekday(date);
-
-    return goal.recurrenceDays?.includes(day) ?? false;
-  }
-
-  if (goal.recurrence === 'monthly') {
-    return goal.recurrenceDays?.includes(date.getDate()) ?? false;
-  }
-
-  return false;
 }
 
 export function CalendarSheet({
@@ -86,6 +65,10 @@ export function CalendarSheet({
     new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1),
   );
 
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+
+  const sheetTranslateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
+
   const year = displayMonth.getFullYear();
 
   const month = displayMonth.getMonth();
@@ -94,15 +77,19 @@ export function CalendarSheet({
 
   const firstDay = getFirstDayOfMonth(year, month);
 
-  const monthName = displayMonth.toLocaleDateString('en-US', {
+  const monthName = displayMonth.toLocaleDateString(undefined, {
     month: 'long',
     year: 'numeric',
   });
 
+  /**
+   * Builds the calendar cells for the current month,
+   * including leading empty cells.
+   */
   const cells = useMemo(() => {
     const result: (number | null)[] = [];
 
-    for (let i = 0; i < firstDay; i++) {
+    for (let index = 0; index < firstDay; index++) {
       result.push(null);
     }
 
@@ -112,6 +99,58 @@ export function CalendarSheet({
 
     return result;
   }, [firstDay, daysInMonth]);
+
+  /**
+   * Opens the sheet with the backdrop fading in
+   * while the sheet slides upward.
+   */
+  useEffect(() => {
+    if (!visible) {
+      return;
+    }
+
+    setDisplayMonth(
+      new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1),
+    );
+
+    backdropOpacity.setValue(0);
+    sheetTranslateY.setValue(SHEET_HEIGHT);
+
+    Animated.parallel([
+      Animated.timing(backdropOpacity, {
+        toValue: 1,
+        duration: ANIMATION_DURATION,
+        useNativeDriver: true,
+      }),
+      Animated.spring(sheetTranslateY, {
+        toValue: 0,
+        damping: 22,
+        stiffness: 220,
+        mass: 0.8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [visible, selectedDate, backdropOpacity, sheetTranslateY]);
+
+  /**
+   * Closes the sheet after its exit animation completes.
+   */
+  const handleClose = () => {
+    Animated.parallel([
+      Animated.timing(backdropOpacity, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.timing(sheetTranslateY, {
+        toValue: SHEET_HEIGHT,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onClose();
+    });
+  };
 
   const goPreviousMonth = () => {
     setDisplayMonth(new Date(year, month - 1, 1));
@@ -125,7 +164,7 @@ export function CalendarSheet({
     const date = new Date(year, month, day);
 
     onSelectDate(date);
-    onClose();
+    handleClose();
   };
 
   const handleToday = () => {
@@ -134,20 +173,41 @@ export function CalendarSheet({
     setDisplayMonth(new Date(today.getFullYear(), today.getMonth(), 1));
 
     onSelectDate(today);
-    onClose();
+    handleClose();
   };
 
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
-      onRequestClose={onClose}
+      animationType="none"
+      onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.backdrop,
+            {
+              opacity: backdropOpacity,
+            },
+          ]}
+        />
 
-        <View style={styles.sheet}>
+        <Pressable style={styles.backdropPressable} onPress={handleClose} />
+
+        <Animated.View
+          style={[
+            styles.sheet,
+            {
+              transform: [
+                {
+                  translateY: sheetTranslateY,
+                },
+              ],
+            },
+          ]}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View>
@@ -156,7 +216,7 @@ export function CalendarSheet({
               <Text style={styles.title}>Calendar</Text>
             </View>
 
-            <Pressable onPress={onClose} style={styles.closeButton}>
+            <Pressable onPress={handleClose} style={styles.closeButton}>
               <X size={20} color={colors.textMuted} />
             </Pressable>
           </View>
@@ -176,7 +236,7 @@ export function CalendarSheet({
 
           {/* Weekday headings */}
           <View style={styles.weekdays}>
-            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, index) => (
+            {getWeekdayLabels().map((day, index) => (
               <Text key={`${day}-${index}`} style={styles.weekday}>
                 {day}
               </Text>
@@ -242,7 +302,7 @@ export function CalendarSheet({
           <Pressable onPress={handleToday} style={styles.todayButton}>
             <Text style={styles.todayButtonText}>TODAY</Text>
           </Pressable>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -257,6 +317,10 @@ const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0, 0, 0, 0.55)',
+  },
+
+  backdropPressable: {
+    ...StyleSheet.absoluteFill,
   },
 
   sheet: {

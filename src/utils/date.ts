@@ -74,3 +74,12 @@ export function getWeekday(date: Date): Weekday {
 
   return (jsDay === 0 ? 7 : jsDay) as Weekday;
 }
+
+/**
+ * Returns the weekday labels in the user's local week order.
+ */
+export function getWeekdayLabels(): string[] {
+  return doesWeekStartOnSunday()
+    ? ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+    : ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+}
