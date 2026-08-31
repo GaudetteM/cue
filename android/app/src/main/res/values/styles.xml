@@ -4,6 +4,16 @@
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+
+        <item name="android:colorAccent">@color/colorAccent</item>
+
+        <item name="colorControlActivated">@color/colorAccent</item>
+        <item name="colorControlNormal">@color/colorText</item>
+
+        <item name="android:textColorPrimary">@color/colorText</item>
+        <!-- <item name="android:textColorSecondary">@color/colorTextMuted</item> -->
+
+        <!-- <item name="android:windowBackground">@color/colorBackground</item> -->
     </style>
 
 </resources>

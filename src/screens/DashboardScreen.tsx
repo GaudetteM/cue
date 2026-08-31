@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 
 import {
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -24,6 +23,7 @@ import { Goal } from '../types/Goal';
 import { colors, radius, spacing } from '../theme/theme';
 import { CalendarSheet } from '../components/CalendarSheet';
 import { getWeekday } from '../utils/date';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 function toDateKey(date: Date) {
   const year = date.getFullYear();

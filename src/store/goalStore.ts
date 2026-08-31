@@ -40,6 +40,8 @@ export const useGoalStore = create<GoalStore>()(
               recurrenceDays,
               dailyStatus: {},
               createdAt: new Date().toISOString(),
+              reminderEnabled: false,
+              reminderTime: '12:00',
             },
           ],
         })),

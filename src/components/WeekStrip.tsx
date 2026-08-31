@@ -158,6 +158,9 @@ const styles = StyleSheet.create({
   },
 
   selectedCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: colors.accent,
   },
 

@@ -83,3 +83,45 @@ export function getWeekdayLabels(): string[] {
     ? ['S', 'M', 'T', 'W', 'T', 'F', 'S']
     : ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 }
+
+/**
+ * Formats a 24-hour time value for display.
+ * @param time The time in HH:mm format.
+ * @returns A localized 12-hour time string.
+ */
+export function formatTime(time: string): string {
+  const [hours, minutes] = time.split(':').map(Number);
+
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+
+  return date.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+/**
+ * Converts a Date into a 24-hour HH:mm time value.
+ * @param date The date containing the time.
+ * @returns The time formatted as HH:mm.
+ */
+export function toTimeString(date: Date): string {
+  return `${String(date.getHours()).padStart(2, '0')}:${String(
+    date.getMinutes(),
+  ).padStart(2, '0')}`;
+}
+
+/**
+ * Creates a Date using the stored HH:mm time.
+ * @param time The time in HH:mm format.
+ * @returns A Date containing the specified time.
+ */
+export function timeToDate(time: string): Date {
+  const [hours, minutes] = time.split(':').map(Number);
+
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+
+  return date;
+}

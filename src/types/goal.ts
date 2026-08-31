@@ -38,4 +38,7 @@ export interface Goal {
   dailyStatus: Record<string, GoalStatus>;
 
   createdAt: string;
+
+  reminderEnabled: boolean;
+  reminderTime?: string;
 }

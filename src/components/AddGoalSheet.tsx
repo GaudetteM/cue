@@ -16,7 +16,14 @@ import { X } from 'lucide-react-native';
 import { colors, radius, spacing } from '../theme/theme';
 import { useGoalStore } from '../store/goalStore';
 import { Goal, GoalRecurrence } from '../types';
-import { doesWeekStartOnSunday, getWeekday } from '../utils/date';
+import {
+  doesWeekStartOnSunday,
+  getWeekday,
+  timeToDate,
+} from '../utils/date';
+import DateTimePicker, {
+  DateTimePickerChangeEvent,
+} from '@react-native-community/datetimepicker';
 
 interface Props {
   visible: boolean;
@@ -51,8 +58,9 @@ const monthDays = Array.from({ length: 31 }, (_, index) => index + 1);
 
 export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState<string | undefined>('Goal');
-
+  const [category, setCategory] = useState<string>('Reminder');
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderTime, setReminderTime] = useState<Date>(new Date());
   const [recurrence, setRecurrence] = useState<GoalRecurrence>('none');
 
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
@@ -62,6 +70,7 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
   const addGoal = useGoalStore(state => state.addGoal);
 
   const updateGoal = useGoalStore(state => state.updateGoal);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   const backdropOpacity = useRef(new Animated.Value(0)).current;
 
@@ -75,9 +84,13 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
     }
 
     setTitle(goal?.title ?? '');
-    setCategory(goal?.category ?? 'Goal');
     setRecurrence(goal?.recurrence ?? 'none');
     setRecurrenceDays(goal?.recurrenceDays ?? []);
+    setCategory(goal?.category ?? 'Reminder');
+    setReminderEnabled(goal?.reminderEnabled ?? false);
+    setReminderTime(
+      goal?.reminderTime ? timeToDate(goal.reminderTime) : new Date(),
+    );
 
     Animated.parallel([
       Animated.timing(backdropOpacity, {
@@ -160,6 +173,24 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
         ? current.filter(item => item !== day)
         : [...current, day].sort((a, b) => a - b),
     );
+  };
+
+  /**
+   * Updates the reminder time and closes the Android picker.
+   */
+  const handleTimeChange = (
+    event: DateTimePickerChangeEvent,
+    selectedDate: Date,
+  ) => {
+    setReminderTime(current => {
+      const next = new Date(current);
+
+      next.setHours(selectedDate.getHours(), selectedDate.getMinutes(), 0, 0);
+
+      return next;
+    });
+
+    setShowTimePicker(false);
   };
 
   const handleSave = () => {
@@ -282,7 +313,7 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
                 return (
                   <Pressable
                     key={item}
-                    onPress={() => setCategory(selected ? undefined : item)}
+                    onPress={() => setCategory(item)}
                     style={[
                       styles.category,
                       selected && styles.categorySelected,
@@ -393,6 +424,59 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
               </View>
             )}
 
+            <Text style={styles.label}>REMINDER</Text>
+
+            <Pressable
+              onPress={() => setReminderEnabled(current => !current)}
+              style={[
+                styles.reminderToggle,
+                reminderEnabled && styles.reminderToggleSelected,
+              ]}
+            >
+              <View style={styles.reminderToggleContent}>
+                <Text
+                  style={[
+                    styles.reminderToggleText,
+                    reminderEnabled && styles.reminderToggleTextSelected,
+                  ]}
+                >
+                  {reminderEnabled ? 'Reminder on' : 'Add reminder'}
+                </Text>
+
+                <View
+                  style={[
+                    styles.toggleIndicator,
+                    reminderEnabled && styles.toggleIndicatorSelected,
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.toggleKnob,
+                      reminderEnabled && styles.toggleKnobSelected,
+                    ]}
+                  />
+                </View>
+              </View>
+            </Pressable>
+
+            {reminderEnabled && (
+              <View style={styles.reminderTimeSection}>
+                <Text style={styles.repeatHint}>REMIND ME AT</Text>
+
+                <Pressable
+                  onPress={() => setShowTimePicker(true)}
+                  style={styles.reminderTimeButton}
+                >
+                  <Text style={styles.reminderTimeText}>
+                    {reminderTime.toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </Text>
+                </Pressable>
+              </View>
+            )}
+
             <Pressable
               onPress={handleSave}
               disabled={
@@ -414,6 +498,16 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
             </Pressable>
           </View>
         </Animated.View>
+
+        {showTimePicker && (
+          <DateTimePicker
+            themeVariant="dark"
+            value={reminderTime}
+            mode="time"
+            is24Hour={false}
+            onValueChange={handleTimeChange}
+          />
+        )}
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -643,5 +737,76 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontSize: 16,
     fontWeight: '800',
+  },
+  reminderToggle: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 13,
+    marginBottom: spacing.md,
+  },
+
+  reminderToggleSelected: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+
+  reminderToggleContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  reminderToggleText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  reminderToggleTextSelected: {
+    color: colors.background,
+  },
+
+  toggleIndicator: {
+    width: 42,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceElevated,
+    padding: 3,
+    justifyContent: 'center',
+  },
+
+  toggleIndicatorSelected: {
+    backgroundColor: colors.background,
+  },
+
+  toggleKnob: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: colors.textMuted,
+  },
+
+  toggleKnobSelected: {
+    alignSelf: 'flex-end',
+    backgroundColor: colors.accent,
+  },
+
+  reminderTimeSection: {
+    marginBottom: spacing.lg,
+  },
+
+  reminderTimeButton: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 13,
+  },
+
+  reminderTimeText: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '700',
   },
 });
