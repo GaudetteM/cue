@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { Goal, GoalRecurrence, GoalStatus } from '../types';
+import { scheduleGoalReminder } from '../services/NotificationScheduler';
 
 interface GoalStore {
   goals: Goal[];
@@ -13,6 +14,8 @@ interface GoalStore {
     category?: string,
     recurrence?: GoalRecurrence,
     recurrenceDays?: number[],
+    reminderEnabled?: boolean,
+    reminderTime?: string,
   ) => void;
 
   updateGoal: (id: string, updates: Partial<Goal>) => void;
@@ -27,24 +30,34 @@ export const useGoalStore = create<GoalStore>()(
     set => ({
       goals: [],
 
-      addGoal: (title, date, category, recurrence = 'none', recurrenceDays) =>
+      addGoal: (
+        title,
+        date,
+        category,
+        recurrence = 'none',
+        recurrenceDays,
+        reminderEnabled = false,
+        reminderTime = '12:00',
+      ) => {
+        const goal: Goal = {
+          id: `${Date.now()}`,
+          title,
+          date,
+          category,
+          recurrence,
+          recurrenceDays,
+          dailyStatus: {},
+          createdAt: new Date().toISOString(),
+          reminderEnabled,
+          reminderTime,
+        };
+
         set(state => ({
-          goals: [
-            ...state.goals,
-            {
-              id: `${Date.now()}`,
-              title,
-              date,
-              category,
-              recurrence,
-              recurrenceDays,
-              dailyStatus: {},
-              createdAt: new Date().toISOString(),
-              reminderEnabled: false,
-              reminderTime: '12:00',
-            },
-          ],
-        })),
+          goals: [...state.goals, goal],
+        }));
+
+        scheduleGoalReminder(goal);
+      },
 
       updateGoal: (id, updates) =>
         set(state => ({

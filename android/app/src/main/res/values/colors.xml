@@ -8,4 +8,5 @@
     <color name="colorText">#e69756</color>
     <color name="colorTextMuted">#999999</color>
     <color name="colorTextOnAccent">#ffffff</color>
+    <color name="ic_launcher_background">#e69756</color>
 </resources>

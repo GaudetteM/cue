@@ -17,6 +17,7 @@ import { colors, radius, spacing } from '../theme/theme';
 import { useGoalStore } from '../store/goalStore';
 import { Goal, GoalRecurrence } from '../types';
 import {
+  dateToTime,
   doesWeekStartOnSunday,
   getWeekday,
   timeToDate,
@@ -24,6 +25,7 @@ import {
 import DateTimePicker, {
   DateTimePickerChangeEvent,
 } from '@react-native-community/datetimepicker';
+import NativeNotifications from '../native/NativeNotifications';
 
 interface Props {
   visible: boolean;
@@ -167,6 +169,19 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
     }
   };
 
+  const handleReminderToggle = async () => {
+    if (reminderEnabled) {
+      setReminderEnabled(false);
+      return;
+    }
+
+    const permissionGranted = await NativeNotifications.requestPermission();
+
+    if (permissionGranted) {
+      setReminderEnabled(true);
+    }
+  };
+
   const toggleRecurrenceDay = (day: number) => {
     setRecurrenceDays(current =>
       current.includes(day)
@@ -193,7 +208,9 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
     setShowTimePicker(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    console.log('🔥 HANDLE SAVE FIRED');
+
     const trimmedTitle = title.trim();
 
     if (!trimmedTitle) {
@@ -214,9 +231,19 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
         category,
         recurrence,
         recurrenceDays,
+        reminderEnabled,
+        reminderTime: dateToTime(reminderTime),
       });
     } else {
-      addGoal(trimmedTitle, date, category, recurrence, recurrenceDays);
+      addGoal(
+        trimmedTitle,
+        date,
+        category,
+        recurrence,
+        recurrenceDays,
+        reminderEnabled,
+        dateToTime(reminderTime),
+      );
     }
 
     handleClose();
@@ -301,7 +328,6 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
               placeholderTextColor={colors.textMuted}
               style={styles.input}
               returnKeyType="done"
-              onSubmitEditing={handleSave}
             />
 
             <Text style={styles.label}>CATEGORY</Text>
@@ -427,7 +453,7 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
             <Text style={styles.label}>REMINDER</Text>
 
             <Pressable
-              onPress={() => setReminderEnabled(current => !current)}
+              onPress={handleReminderToggle}
               style={[
                 styles.reminderToggle,
                 reminderEnabled && styles.reminderToggleSelected,
