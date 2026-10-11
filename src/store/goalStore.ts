@@ -60,8 +60,6 @@ export const useGoalStore = create<GoalStore>()(
         }));
 
         scheduleGoalReminder(goal);
-
-        console.log('Goals after save:', useGoalStore.getState().goals);
       },
 
       updateGoal: (id, updates) => {

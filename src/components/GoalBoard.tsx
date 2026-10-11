@@ -60,6 +60,9 @@ export function GoalBoard({ goals, dateKey, onGoalPressed }: Props) {
               columnGoals.map(goal => (
                 <Pressable
                   key={goal.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${goal.title}, ${goal.category ?? 'Uncategorized'}, ${column.status}`}
+                  accessibilityHint="Double tap to move this item to the next status."
                   onPress={() => onGoalPressed(goal)}
                   style={({ pressed }) => [
                     styles.card,

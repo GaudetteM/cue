@@ -9,13 +9,11 @@ import com.facebook.react.module.model.ReactModuleInfoProvider
 class NativeNotificationsPackage : BaseReactPackage() {
 
     override fun getModule(
-        name: String,
-        reactContext: ReactApplicationContext,
+            name: String,
+            reactContext: ReactApplicationContext,
     ): NativeModule? {
         return when (name) {
-            NativeNotificationsModule.NAME ->
-                NativeNotificationsModule(reactContext)
-
+            NativeNotificationsModule.NAME -> NativeNotificationsModule(reactContext)
             else -> null
         }
     }
@@ -23,14 +21,15 @@ class NativeNotificationsPackage : BaseReactPackage() {
     override fun getReactModuleInfoProvider(): ReactModuleInfoProvider {
         return ReactModuleInfoProvider {
             mapOf(
-                NativeNotificationsModule.NAME to ReactModuleInfo(
-                    NativeNotificationsModule.NAME,
-                    NativeNotificationsModule::class.java.name,
-                    false,
-                    false,
-                    false,
-                    true,
-                )
+                    NativeNotificationsModule.NAME to
+                            ReactModuleInfo(
+                                    NativeNotificationsModule.NAME,
+                                    NativeNotificationsModule::class.java.name,
+                                    false,
+                                    false,
+                                    false,
+                                    true,
+                            )
             )
         }
     }

@@ -232,20 +232,35 @@ export function CalendarSheet({
               <Text style={styles.title}>Calendar</Text>
             </View>
 
-            <Pressable onPress={handleClose} style={styles.closeButton}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Close calendar"
+              onPress={handleClose}
+              style={styles.closeButton}
+            >
               <X size={20} color={colors.textMuted} />
             </Pressable>
           </View>
 
           {/* Month navigation */}
           <View style={styles.monthHeader}>
-            <Pressable onPress={goPreviousMonth} style={styles.navButton}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Previous month"
+              onPress={goPreviousMonth}
+              style={styles.navButton}
+            >
               <ChevronLeft size={20} color={colors.text} />
             </Pressable>
 
             <Text style={styles.monthTitle}>{monthName}</Text>
 
-            <Pressable onPress={goNextMonth} style={styles.navButton}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Next month"
+              onPress={goNextMonth}
+              style={styles.navButton}
+            >
               <ChevronRight size={20} color={colors.text} />
             </Pressable>
           </View>
@@ -277,6 +292,15 @@ export function CalendarSheet({
               return (
                 <Pressable
                   key={day}
+                  accessibilityRole="button"
+                  accessibilityLabel={date.toLocaleDateString(undefined, {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                  accessibilityState={{ selected }}
+                  accessibilityHint="Colored dots indicate scheduled item categories."
                   onPress={() => handleSelectDay(day)}
                   style={styles.dayCell}
                 >
@@ -314,7 +338,12 @@ export function CalendarSheet({
           </View>
 
           {/* Footer */}
-          <Pressable onPress={handleToday} style={styles.todayButton}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Go to today"
+            onPress={handleToday}
+            style={styles.todayButton}
+          >
             <Text style={styles.todayButtonText}>TODAY</Text>
           </Pressable>
         </Animated.View>

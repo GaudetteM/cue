@@ -16,16 +16,9 @@ import { Goal } from '../types/Goal';
 
 import { colors, radius, spacing } from '../theme/theme';
 import { CalendarSheet } from '../components/CalendarSheet';
-import { getWeekday } from '../utils/date';
+import { toDateKey } from '../utils/date';
+import { occursOnDate } from '../utils/recurrence';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-function toDateKey(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-}
 
 function formatDate(date: Date) {
   return date.toLocaleDateString('en-US', {
@@ -33,37 +26,6 @@ function formatDate(date: Date) {
     month: 'long',
     day: 'numeric',
   });
-}
-
-function occursOnDate(goal: Goal, date: Date) {
-  const goalDate = new Date(`${goal.date}T12:00:00`);
-
-  const targetKey = toDateKey(date);
-  const goalKey = toDateKey(goalDate);
-
-  if (goal.recurrence === 'none') {
-    return goalKey === targetKey;
-  }
-
-  if (date < goalDate) {
-    return false;
-  }
-
-  if (goal.recurrence === 'daily') {
-    return true;
-  }
-
-  if (goal.recurrence === 'weekly') {
-    const day = getWeekday(date);
-
-    return goal.recurrenceDays?.includes(day) ?? false;
-  }
-
-  if (goal.recurrence === 'monthly') {
-    return goal.recurrenceDays?.includes(date.getDate()) ?? false;
-  }
-
-  return false;
 }
 
 export function DashboardScreen() {
@@ -140,7 +102,12 @@ export function DashboardScreen() {
             <Text style={styles.subtitle}>KEEP MOVING.</Text>
           </View>
 
-          <Pressable onPress={handleAddGoal} style={styles.addButton}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Add a goal"
+            onPress={handleAddGoal}
+            style={styles.addButton}
+          >
             <Plus size={22} color={colors.background} strokeWidth={2.5} />
           </Pressable>
         </View>
@@ -174,6 +141,8 @@ export function DashboardScreen() {
           <Text style={styles.selectedDate}>{formatDate(selectedDate)}</Text>
 
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open calendar"
             onPress={() => setCalendarVisible(true)}
             style={styles.calendarButton}
           >
@@ -221,7 +190,23 @@ export function DashboardScreen() {
           </View>
         )}
 
-        {viewMode === 'board' ? (
+        {todaysGoals.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>Nothing on your cue</Text>
+
+            <Text style={styles.emptyText}>
+              Add something you want to get done today.
+            </Text>
+
+            <Pressable
+              accessibilityRole="button"
+              onPress={handleAddGoal}
+              style={styles.emptyButton}
+            >
+              <Text style={styles.emptyButtonText}>Add a goal</Text>
+            </Pressable>
+          </View>
+        ) : viewMode === 'board' ? (
           <GoalBoard
             goals={todaysGoals}
             dateKey={dateKey}
@@ -233,30 +218,16 @@ export function DashboardScreen() {
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
           >
-            {todaysGoals.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyTitle}>Nothing on your cue</Text>
-
-                <Text style={styles.emptyText}>
-                  Add something you want to get done today.
-                </Text>
-
-                <Pressable onPress={handleAddGoal} style={styles.emptyButton}>
-                  <Text style={styles.emptyButtonText}>Add a goal</Text>
-                </Pressable>
-              </View>
-            ) : (
-              todaysGoals.map(goal => (
-                <GoalCard
-                  key={goal.id}
-                  goal={goal}
-                  status={goal.dailyStatus[dateKey] ?? 'todo'}
-                  onPress={() => handleGoalPress(goal)}
-                  onEdit={() => handleEditGoal(goal)}
-                  onDelete={() => deleteGoal(goal.id)}
-                />
-              ))
-            )}
+            {todaysGoals.map(goal => (
+              <GoalCard
+                key={goal.id}
+                goal={goal}
+                status={goal.dailyStatus[dateKey] ?? 'todo'}
+                onPress={() => handleGoalPress(goal)}
+                onEdit={() => handleEditGoal(goal)}
+                onDelete={() => deleteGoal(goal.id)}
+              />
+            ))}
           </ScrollView>
         )}
       </View>
@@ -407,18 +378,10 @@ const styles = StyleSheet.create({
   },
 
   emptyState: {
-    alignItems: 'center',
-    paddingTop: spacing.xxl,
-  },
-
-  emptyIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: colors.surface,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
 
   emptyTitle: {
@@ -433,6 +396,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     marginBottom: spacing.lg,
+    lineHeight: 20,
   },
 
   emptyButton: {

@@ -17,6 +17,9 @@ export function ViewToggle({ value, onChange }: Props) {
   return (
     <View style={styles.container}>
       <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="List view"
+        accessibilityState={{ selected: value === 'list' }}
         onPress={() => onChange('list')}
         style={[styles.option, value === 'list' && styles.activeOption]}
       >
@@ -31,6 +34,9 @@ export function ViewToggle({ value, onChange }: Props) {
       </Pressable>
 
       <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Board view"
+        accessibilityState={{ selected: value === 'board' }}
         onPress={() => onChange('board')}
         style={[styles.option, value === 'board' && styles.activeOption]}
       >

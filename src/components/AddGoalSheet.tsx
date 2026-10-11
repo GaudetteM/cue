@@ -5,6 +5,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -24,7 +25,6 @@ import {
 } from '../utils/date';
 import DateTimePicker, {
   DateTimePickerChangeEvent,
-  DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import NativeNotifications from '../native/NativeNotifications';
 
@@ -273,12 +273,14 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
     <Modal
       visible={visible}
       transparent
+      statusBarTranslucent
+      navigationBarTranslucent
       animationType="none"
       onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
         style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior="padding"
       >
         <Animated.View
           style={[
@@ -303,7 +305,14 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
             },
           ]}
         >
-          <View style={styles.sheet}>
+          <ScrollView
+            style={styles.sheet}
+            contentContainerStyle={styles.sheetContent}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+          >
             <View style={styles.handle} />
 
             <View style={styles.header}>
@@ -311,7 +320,12 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
                 {isEditing ? 'Edit goal' : 'New goal'}
               </Text>
 
-              <Pressable onPress={handleClose} style={styles.closeButton}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Close goal form"
+                onPress={handleClose}
+                style={styles.closeButton}
+              >
                 <X size={20} color={colors.textSecondary} />
               </Pressable>
             </View>
@@ -337,6 +351,8 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
                 return (
                   <Pressable
                     key={item}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
                     onPress={() => setCategory(item)}
                     style={[
                       styles.category,
@@ -365,6 +381,8 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
                 return (
                   <Pressable
                     key={option.value}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
                     onPress={() => handleRecurrenceChange(option.value)}
                     style={[
                       styles.recurrenceOption,
@@ -395,6 +413,13 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
                     return (
                       <Pressable
                         key={day.value}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Repeat on ${new Date(
+                          2023,
+                          0,
+                          day.value === 7 ? 1 : day.value + 1,
+                        ).toLocaleDateString(undefined, { weekday: 'long' })}`}
+                        accessibilityState={{ selected }}
                         onPress={() => toggleRecurrenceDay(day.value)}
                         style={[
                           styles.dayButton,
@@ -427,6 +452,9 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
                     return (
                       <Pressable
                         key={day}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Repeat on day ${day} of the month`}
+                        accessibilityState={{ selected }}
                         onPress={() => toggleRecurrenceDay(day)}
                         style={[
                           styles.monthDay,
@@ -451,6 +479,8 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
             <Text style={styles.label}>REMINDER</Text>
 
             <Pressable
+              accessibilityRole="switch"
+              accessibilityState={{ checked: reminderEnabled }}
               onPress={handleReminderToggle}
               style={[
                 styles.reminderToggle,
@@ -497,6 +527,11 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
                 ) : (
                   <>
                     <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Reminder time, ${reminderTime.toLocaleTimeString(
+                        [],
+                        { hour: 'numeric', minute: '2-digit' },
+                      )}`}
                       onPress={() => setShowTimePicker(true)}
                       style={styles.reminderTimeButton}
                     >
@@ -522,6 +557,7 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
             )}
 
             <Pressable
+              accessibilityRole="button"
               onPress={handleSave}
               disabled={
                 !title.trim() ||
@@ -540,7 +576,7 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
                 {isEditing ? 'Save changes' : 'Add goal'}
               </Text>
             </Pressable>
-          </View>
+          </ScrollView>
         </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
@@ -570,9 +606,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceElevated,
     borderTopLeftRadius: radius.lg,
     borderTopRightRadius: radius.lg,
+  },
+
+  sheetContent: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.lg,
   },
 
   handle: {
@@ -581,14 +620,14 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     backgroundColor: colors.border,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
 
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.md,
   },
 
   heading: {
@@ -620,14 +659,15 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 16,
     paddingHorizontal: spacing.md,
-    paddingVertical: 15,
-    marginBottom: spacing.xl,
+    paddingVertical: 14,
+    marginBottom: spacing.lg,
   },
 
   categories: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.sm,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
 
   category: {

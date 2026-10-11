@@ -57,6 +57,8 @@ export function WeekStrip({
       {/* Week navigation */}
       <View style={styles.header}>
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Previous week"
           onPress={onPreviousWeek}
           style={styles.arrowButton}
           hitSlop={8}
@@ -66,7 +68,13 @@ export function WeekStrip({
 
         <Text style={styles.weekLabel}>{weekLabel}</Text>
 
-        <Pressable onPress={onNextWeek} style={styles.arrowButton} hitSlop={8}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Next week"
+          onPress={onNextWeek}
+          style={styles.arrowButton}
+          hitSlop={8}
+        >
           <ChevronRight size={20} color={colors.text} />
         </Pressable>
       </View>
@@ -84,6 +92,15 @@ export function WeekStrip({
 
           return (
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={date.toLocaleDateString(undefined, {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+              accessibilityHint="Colored dots indicate scheduled item categories."
+              accessibilityState={{ selected }}
               key={toDateKey(date)}
               onPress={() => onSelectDate(date)}
               style={styles.dayContainer}
