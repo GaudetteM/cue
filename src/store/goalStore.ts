@@ -3,7 +3,10 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { Goal, GoalRecurrence, GoalStatus } from '../types';
-import { scheduleGoalReminder } from '../services/NotificationScheduler';
+import {
+  cancelGoalReminder,
+  scheduleGoalReminder,
+} from '../services/NotificationScheduler';
 
 interface GoalStore {
   goals: Goal[];
@@ -59,17 +62,26 @@ export const useGoalStore = create<GoalStore>()(
         scheduleGoalReminder(goal);
       },
 
-      updateGoal: (id, updates) =>
+      updateGoal: (id, updates) => {
+        const goal = useGoalStore.getState().goals.find(item => item.id === id);
+
+        if (!goal) {
+          return;
+        }
+
+        const updatedGoal = {
+          ...goal,
+          ...updates,
+        };
+
+        cancelGoalReminder(id);
+
         set(state => ({
-          goals: state.goals.map(goal =>
-            goal.id === id
-              ? {
-                  ...goal,
-                  ...updates,
-                }
-              : goal,
-          ),
-        })),
+          goals: state.goals.map(item => (item.id === id ? updatedGoal : item)),
+        }));
+
+        scheduleGoalReminder(updatedGoal);
+      },
 
       setGoalStatus: (id, date, status) =>
         set(state => ({
@@ -89,10 +101,13 @@ export const useGoalStore = create<GoalStore>()(
           }),
         })),
 
-      deleteGoal: id =>
+      deleteGoal: id => {
+        cancelGoalReminder(id);
+
         set(state => ({
           goals: state.goals.filter(goal => goal.id !== id),
-        })),
+        }));
+      },
     }),
 
     {

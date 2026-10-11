@@ -1,6 +1,8 @@
 package com.tamarack.cue
 
+import android.content.Intent
 import com.facebook.react.ReactActivity
+import com.facebook.react.ReactApplication
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
@@ -15,6 +17,12 @@ class MainActivity : ReactActivity() {
                   mainComponentName,
                   fabricEnabled,
           )
+
+  override fun onNewIntent(intent: Intent?) {
+    super.onNewIntent(intent)
+
+    setIntent(intent)
+  }
 
   override fun onRequestPermissionsResult(
           requestCode: Int,

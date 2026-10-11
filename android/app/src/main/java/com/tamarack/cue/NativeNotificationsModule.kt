@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.module.annotations.ReactModule
+import com.facebook.react.modules.core.DeviceEventManagerModule
 
 @ReactModule(name = NativeNotificationsModule.NAME)
 class NativeNotificationsModule(
@@ -119,5 +120,22 @@ class NativeNotificationsModule(
 
     override fun cancelAllNotifications() {
         notificationService.cancelAllNotifications()
+    }
+
+    fun emitNotificationTapped(
+            notificationId: String,
+    ) {
+        if (!reactApplicationContext.hasActiveReactInstance()) {
+            return
+        }
+
+        reactApplicationContext
+                .getJSModule(
+                        DeviceEventManagerModule.RCTDeviceEventEmitter::class.java,
+                )
+                .emit(
+                        "notificationTapped",
+                        notificationId,
+                )
     }
 }

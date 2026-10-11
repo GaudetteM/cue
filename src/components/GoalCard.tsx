@@ -24,54 +24,64 @@ interface Props {
 }
 
 const ACTION_WIDTH = 152;
-const SWIPE_THRESHOLD = 70;
 
 export function GoalCard({ goal, status, onPress, onEdit, onDelete }: Props) {
-  const translateX = useRef(new Animated.Value(0)).current;
-
   const isDoing = status === 'doing';
   const isDone = status === 'done';
 
-  const resetPosition = () => {
+  const translateX = useRef(new Animated.Value(0)).current;
+  const isOpen = useRef(false);
+  const gestureStartX = useRef(0);
+
+  const animateTo = (position: number) => {
     Animated.spring(translateX, {
-      toValue: 0,
+      toValue: position,
       useNativeDriver: true,
+      bounciness: 0,
     }).start();
+
+    isOpen.current = position !== 0;
   };
 
-  const openActions = () => {
-    Animated.spring(translateX, {
-      toValue: -ACTION_WIDTH,
-      useNativeDriver: true,
-    }).start();
-  };
+  const resetPosition = () => animateTo(0);
+  const openActions = () => animateTo(-ACTION_WIDTH);
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
 
-      onMoveShouldSetPanResponder: (_, gesture) => {
-        return (
-          Math.abs(gesture.dx) > 10 &&
-          Math.abs(gesture.dx) > Math.abs(gesture.dy)
-        );
+      onMoveShouldSetPanResponder: (_, gesture) =>
+        Math.abs(gesture.dx) > 10 &&
+        Math.abs(gesture.dx) > Math.abs(gesture.dy),
+
+      onPanResponderGrant: () => {
+        translateX.stopAnimation();
+
+        gestureStartX.current = isOpen.current ? -ACTION_WIDTH : 0;
       },
 
       onPanResponderMove: (_, gesture) => {
-        const nextX = Math.min(0, Math.max(-ACTION_WIDTH, gesture.dx));
+        const nextX = Math.min(
+          0,
+          Math.max(-ACTION_WIDTH, gestureStartX.current + gesture.dx),
+        );
 
         translateX.setValue(nextX);
       },
 
       onPanResponderRelease: (_, gesture) => {
-        if (gesture.dx < -SWIPE_THRESHOLD) {
+        const finalX = gestureStartX.current + gesture.dx;
+
+        if (finalX < -ACTION_WIDTH / 2) {
           openActions();
         } else {
           resetPosition();
         }
       },
 
-      onPanResponderTerminate: resetPosition,
+      onPanResponderTerminate: () => {
+        animateTo(isOpen.current ? -ACTION_WIDTH : 0);
+      },
     }),
   ).current;
 

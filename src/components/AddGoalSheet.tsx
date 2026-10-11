@@ -141,32 +141,26 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
    * Updates recurrence settings and initializes
    * the appropriate recurrence days when needed.
    */
+
   const handleRecurrenceChange = (value: GoalRecurrence) => {
+    if (value === recurrence) {
+      return;
+    }
+
     setRecurrence(value);
-
-    if (value === 'none') {
-      setRecurrenceDays([]);
-      return;
-    }
-
-    if (value === 'daily') {
-      setRecurrenceDays([]);
-      return;
-    }
-
-    if (value === 'weekly' && recurrenceDays.length === 0) {
-      const selectedDate = new Date(`${date}T12:00:00`);
-
-      setRecurrenceDays([getWeekday(selectedDate)]);
+    if (value === 'weekly' || value === 'monthly') {
+      const startDateKey = goal?.date ?? date;
+      const startDate = new Date(`${startDateKey}T12:00:00`);
+      if (value === 'weekly') {
+        setRecurrenceDays([getWeekday(startDate)]);
+      } else {
+        setRecurrenceDays([startDate.getDate()]);
+      }
 
       return;
     }
 
-    if (value === 'monthly' && recurrenceDays.length === 0) {
-      const selectedDate = new Date(`${date}T12:00:00`);
-
-      setRecurrenceDays([selectedDate.getDate()]);
-    }
+    setRecurrenceDays([]);
   };
 
   const handleReminderToggle = async () => {
@@ -209,8 +203,6 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
   };
 
   const handleSave = async () => {
-    console.log('🔥 HANDLE SAVE FIRED');
-
     const trimmedTitle = title.trim();
 
     if (!trimmedTitle) {
