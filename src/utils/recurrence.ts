@@ -5,17 +5,14 @@ import { getWeekday, toDateKey } from './date';
  * Determines whether a goal occurs on a given date.
  */
 export function occursOnDate(goal: Goal, date: Date): boolean {
-  const goalDate = new Date(`${goal.date}T12:00:00`);
-
   const targetKey = toDateKey(date);
-  const goalKey = toDateKey(goalDate);
 
   if (goal.recurrence === 'none') {
-    return goalKey === targetKey;
+    return goal.date === targetKey;
   }
 
-  // Recurring goals do not begin until their original date.
-  if (date < goalDate) {
+  // Recurring goals cannot occur before their start date.
+  if (targetKey < goal.date) {
     return false;
   }
 
