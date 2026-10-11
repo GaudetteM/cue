@@ -10,6 +10,15 @@ export interface Spec extends TurboModule {
     timestamp: number,
   ): void;
 
+  scheduleRecurringNotification(
+    id: string,
+    title: string,
+    body: string,
+    timestamp: number,
+    recurrence: string,
+    recurrenceDays: ReadonlyArray<number>,
+  ): void;
+
   cancelNotification(id: string): void;
 
   cancelAllNotifications(): void;

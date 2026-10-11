@@ -27,21 +27,33 @@ export function scheduleGoalReminder(goal: Goal): void {
     return;
   }
 
-  if (goal.recurrence !== 'none') {
-    return;
-  }
-
   const reminderDate = createReminderDate(goal.date, goal.reminderTime);
 
   if (reminderDate.getTime() <= Date.now()) {
     return;
   }
 
-  NativeNotifications.scheduleNotification(
-    getReminderNotificationId(goal.id),
+  const notificationId = getReminderNotificationId(goal.id);
+  const body = 'You have a reminder from Cue.';
+
+  if (goal.recurrence === 'none') {
+    NativeNotifications.scheduleNotification(
+      notificationId,
+      goal.title,
+      body,
+      reminderDate.getTime(),
+    );
+
+    return;
+  }
+
+  NativeNotifications.scheduleRecurringNotification(
+    notificationId,
     goal.title,
-    'You have a reminder from Cue.',
+    body,
     reminderDate.getTime(),
+    goal.recurrence,
+    goal.recurrenceDays ?? [],
   );
 }
 

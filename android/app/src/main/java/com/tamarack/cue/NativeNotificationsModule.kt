@@ -7,6 +7,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
+import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.modules.core.DeviceEventManagerModule
 
@@ -109,6 +110,27 @@ class NativeNotificationsModule(
                 title = title,
                 body = body,
                 timestamp = timestamp.toLong(),
+        )
+    }
+
+    override fun scheduleRecurringNotification(
+            id: String,
+            title: String,
+            body: String,
+            timestamp: Double,
+            recurrence: String,
+            recurrenceDays: ReadableArray,
+    ) {
+        notificationService.scheduleRecurringNotification(
+                id = id,
+                title = title,
+                body = body,
+                timestamp = timestamp.toLong(),
+                recurrence = recurrence,
+                recurrenceDays =
+                        (0 until recurrenceDays.size()).mapNotNull {
+                            if (recurrenceDays.isNull(it)) null else recurrenceDays.getInt(it)
+                        },
         )
     }
 

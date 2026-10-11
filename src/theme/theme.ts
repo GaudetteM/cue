@@ -8,12 +8,16 @@ export const colors = {
   textMuted: '#706E66',
 
   accent: '#e69756',
-  accentAlt: '#49759C',
   accentSoft: '#3A341C',
 
   border: '#2B2B26',
 
   success: '#9BCB7B',
+
+  dotReminder: '#e69756',
+  dotGoal: '#34D399',
+  dotTask: '#60A5FA',
+  dotOther: '#C084FC',
 };
 
 export const spacing = {

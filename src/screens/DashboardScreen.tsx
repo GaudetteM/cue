@@ -1,12 +1,6 @@
 import React, { useMemo, useState } from 'react';
 
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Calendar, Plus } from 'lucide-react-native';
 
@@ -221,7 +215,7 @@ export function DashboardScreen() {
 
             {doingCount > 0 && (
               <Text style={styles.doingCount}>
-                {doingCount} {doingCount === 1 ? 'goal' : 'goals'} in progress
+                {doingCount} {doingCount === 1 ? 'item' : 'items'} in progress
               </Text>
             )}
           </View>

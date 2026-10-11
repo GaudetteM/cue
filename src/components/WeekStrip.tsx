@@ -11,11 +11,20 @@ import { colors, spacing } from '../theme/theme';
 import { getWeekDays, toDateKey } from '../utils/date';
 import { occursOnDate } from '../utils/recurrence';
 
-/**
- * Determines whether any goal occurs on the given date.
- */
-function getHasGoals(goals: Goal[], date: Date): boolean {
-  return goals.some(goal => occursOnDate(goal, date));
+function getGoalTypesForDate(goals: Goal[], date: Date) {
+  const occurringGoals = goals.filter(goal => occursOnDate(goal, date));
+
+  return {
+    hasReminder: occurringGoals.some(goal => goal.category === 'Reminder'),
+    hasTask: occurringGoals.some(goal => goal.category === 'Task'),
+    hasGoal: occurringGoals.some(goal => goal.category === 'Goal'),
+    hasOther: occurringGoals.some(
+      goal =>
+        goal.category !== 'Task' &&
+        goal.category !== 'Goal' &&
+        goal.category !== 'Reminder',
+    ),
+  };
 }
 
 interface Props {
@@ -67,7 +76,7 @@ export function WeekStrip({
         {week.map(date => {
           const selected = toDateKey(date) === toDateKey(selectedDate);
 
-          const hasGoals = getHasGoals(goals, date);
+          const goalTypes = getGoalTypesForDate(goals, date);
 
           const weekday = date.toLocaleDateString(undefined, {
             weekday: 'short',
@@ -95,7 +104,20 @@ export function WeekStrip({
                 </Text>
               </View>
 
-              {hasGoals && <View style={styles.goalDot} />}
+              <View style={styles.dots}>
+                {goalTypes.hasReminder && (
+                  <View style={[styles.dot, styles.reminderDot]} />
+                )}
+                {goalTypes.hasTask && (
+                  <View style={[styles.dot, styles.taskDot]} />
+                )}
+                {goalTypes.hasGoal && (
+                  <View style={[styles.dot, styles.goalDot]} />
+                )}
+                {goalTypes.hasOther && (
+                  <View style={[styles.dot, styles.otherDot]} />
+                )}
+              </View>
             </Pressable>
           );
         })}
@@ -174,11 +196,34 @@ const styles = StyleSheet.create({
     color: colors.background,
   },
 
-  goalDot: {
+  dots: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    height: 8,
+    marginTop: 4,
+  },
+
+  dot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: colors.accent,
-    marginTop: 4,
+  },
+
+  reminderDot: {
+    backgroundColor: colors.dotReminder, // Accent color for reminders
+  },
+
+  taskDot: {
+    backgroundColor: colors.dotTask, // Blue
+  },
+
+  goalDot: {
+    backgroundColor: colors.dotGoal, // Green
+  },
+
+  otherDot: {
+    backgroundColor: colors.dotOther, // Reminders and other categories
   },
 });

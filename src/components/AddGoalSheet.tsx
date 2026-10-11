@@ -24,6 +24,7 @@ import {
 } from '../utils/date';
 import DateTimePicker, {
   DateTimePickerChangeEvent,
+  DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import NativeNotifications from '../native/NativeNotifications';
 
@@ -64,6 +65,7 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [reminderTime, setReminderTime] = useState<Date>(new Date());
   const [recurrence, setRecurrence] = useState<GoalRecurrence>('none');
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
 
@@ -72,7 +74,6 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
   const addGoal = useGoalStore(state => state.addGoal);
 
   const updateGoal = useGoalStore(state => state.updateGoal);
-  const [showTimePicker, setShowTimePicker] = useState(false);
 
   const backdropOpacity = useRef(new Animated.Value(0)).current;
 
@@ -189,17 +190,17 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
    */
   const handleTimeChange = (
     event: DateTimePickerChangeEvent,
-    selectedDate: Date,
+    selectedDate?: Date,
   ) => {
-    setReminderTime(current => {
-      const next = new Date(current);
+    if (Platform.OS === 'android') {
+      setShowTimePicker(false);
+    }
 
-      next.setHours(selectedDate.getHours(), selectedDate.getMinutes(), 0, 0);
+    if (!selectedDate) {
+      return;
+    }
 
-      return next;
-    });
-
-    setShowTimePicker(false);
+    setReminderTime(selectedDate);
   };
 
   const handleSave = async () => {
@@ -217,25 +218,30 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
       return;
     }
 
-    if (isEditing) {
-      updateGoal(goal.id, {
-        title: trimmedTitle,
-        category,
-        recurrence,
-        recurrenceDays,
-        reminderEnabled,
-        reminderTime: dateToTime(reminderTime),
-      });
-    } else {
-      addGoal(
-        trimmedTitle,
-        date,
-        category,
-        recurrence,
-        recurrenceDays,
-        reminderEnabled,
-        dateToTime(reminderTime),
-      );
+    try {
+      if (isEditing) {
+        updateGoal(goal.id, {
+          title: trimmedTitle,
+          category,
+          recurrence,
+          recurrenceDays,
+          reminderEnabled,
+          reminderTime: dateToTime(reminderTime),
+        });
+      } else {
+        addGoal(
+          trimmedTitle,
+          date,
+          category,
+          recurrence,
+          recurrenceDays,
+          reminderEnabled,
+          dateToTime(reminderTime),
+        );
+      }
+    } catch (error) {
+      console.error('Failed to save goal:', error);
+      return;
     }
 
     handleClose();
@@ -481,17 +487,37 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
               <View style={styles.reminderTimeSection}>
                 <Text style={styles.repeatHint}>REMIND ME AT</Text>
 
-                <Pressable
-                  onPress={() => setShowTimePicker(true)}
-                  style={styles.reminderTimeButton}
-                >
-                  <Text style={styles.reminderTimeText}>
-                    {reminderTime.toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </Text>
-                </Pressable>
+                {Platform.OS === 'ios' ? (
+                  <DateTimePicker
+                    themeVariant="dark"
+                    value={reminderTime}
+                    mode="time"
+                    onValueChange={handleTimeChange}
+                  />
+                ) : (
+                  <>
+                    <Pressable
+                      onPress={() => setShowTimePicker(true)}
+                      style={styles.reminderTimeButton}
+                    >
+                      <Text style={styles.reminderTimeText}>
+                        {reminderTime.toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </Text>
+                    </Pressable>
+
+                    {showTimePicker && (
+                      <DateTimePicker
+                        value={reminderTime}
+                        mode="time"
+                        display="default"
+                        onValueChange={handleTimeChange}
+                      />
+                    )}
+                  </>
+                )}
               </View>
             )}
 
@@ -516,16 +542,6 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
             </Pressable>
           </View>
         </Animated.View>
-
-        {showTimePicker && (
-          <DateTimePicker
-            themeVariant="dark"
-            value={reminderTime}
-            mode="time"
-            is24Hour={false}
-            onValueChange={handleTimeChange}
-          />
-        )}
       </KeyboardAvoidingView>
     </Modal>
   );

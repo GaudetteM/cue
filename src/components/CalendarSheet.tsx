@@ -54,6 +54,22 @@ function getFirstDayOfMonth(year: number, month: number): number {
   return day === 0 ? 6 : day - 1;
 }
 
+function getGoalTypesForDate(goals: Goal[], date: Date) {
+  const occurringGoals = goals.filter(goal => occursOnDate(goal, date));
+
+  return {
+    hasReminder: occurringGoals.some(goal => goal.category === 'Reminder'),
+    hasTask: occurringGoals.some(goal => goal.category === 'Task'),
+    hasGoal: occurringGoals.some(goal => goal.category === 'Goal'),
+    hasOther: occurringGoals.some(
+      goal =>
+        goal.category !== 'Task' &&
+        goal.category !== 'Goal' &&
+        goal.category !== 'Reminder',
+    ),
+  };
+}
+
 export function CalendarSheet({
   visible,
   selectedDate,
@@ -256,9 +272,7 @@ export function CalendarSheet({
 
               const today = isSameDay(date, new Date());
 
-              const goalCount = goals.filter(goal =>
-                occursOnDate(goal, date),
-              ).length;
+              const goalTypes = getGoalTypesForDate(goals, date);
 
               return (
                 <Pressable
@@ -284,15 +298,16 @@ export function CalendarSheet({
                     </Text>
                   </View>
 
-                  {goalCount > 0 && (
-                    <View style={styles.goalDots}>
-                      {Array.from({
-                        length: Math.min(goalCount, 3),
-                      }).map((_, dotIndex) => (
-                        <View key={dotIndex} style={styles.goalDot} />
-                      ))}
-                    </View>
-                  )}
+                  <View style={styles.goalDots}>
+                    {goalTypes.hasReminder && (
+                      <View style={styles.reminderDot} />
+                    )}
+                    {goalTypes.hasTask && <View style={styles.taskDot} />}
+
+                    {goalTypes.hasGoal && <View style={styles.goalDot} />}
+
+                    {goalTypes.hasOther && <View style={styles.otherDot} />}
+                  </View>
                 </Pressable>
               );
             })}
@@ -449,11 +464,32 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
 
+  reminderDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: colors.dotReminder,
+  },
+
   goalDot: {
     width: 3,
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.dotGoal,
+  },
+
+  taskDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: colors.dotTask,
+  },
+
+  otherDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: colors.dotOther,
   },
 
   todayButton: {
