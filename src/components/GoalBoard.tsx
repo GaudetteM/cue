@@ -1,9 +1,6 @@
 import React from 'react';
-
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-
 import { Goal, GoalStatus } from '../types';
-
 import { colors, radius, spacing } from '../theme/theme';
 
 interface Props {
@@ -61,7 +58,9 @@ export function GoalBoard({ goals, dateKey, onGoalPressed }: Props) {
                 <Pressable
                   key={goal.id}
                   accessibilityRole="button"
-                  accessibilityLabel={`${goal.title}, ${goal.category ?? 'Uncategorized'}, ${column.status}`}
+                  accessibilityLabel={`${goal.title}, ${
+                    goal.category ?? 'Uncategorized'
+                  }, ${column.status}`}
                   accessibilityHint="Double tap to move this item to the next status."
                   onPress={() => onGoalPressed(goal)}
                   style={({ pressed }) => [

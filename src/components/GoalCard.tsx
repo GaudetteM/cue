@@ -8,11 +8,8 @@ import {
   Text,
   View,
 } from 'react-native';
-
 import { Check, Circle, Clock3, Pencil, Trash2 } from 'lucide-react-native';
-
 import { Goal, GoalStatus } from '../types';
-
 import { colors, radius, spacing } from '../theme/theme';
 
 interface Props {

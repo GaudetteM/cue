@@ -1,13 +1,8 @@
 import React, { useMemo } from 'react';
-
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
-
 import { Goal } from '../types';
-
 import { colors, spacing } from '../theme/theme';
-
 import { getWeekDays, toDateKey } from '../utils/date';
 import { occursOnDate } from '../utils/recurrence';
 

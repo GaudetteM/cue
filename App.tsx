@@ -1,7 +1,13 @@
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
 import { DashboardScreen } from './src/screens/DashboardScreen';
 
 function App() {
-  return <DashboardScreen />;
+  return (
+    <SafeAreaProvider>
+      <DashboardScreen />
+    </SafeAreaProvider>
+  );
 }
 
 export default App;

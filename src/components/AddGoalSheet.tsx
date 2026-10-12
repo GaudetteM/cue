@@ -11,9 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-
 import { X } from 'lucide-react-native';
-
 import { colors, radius, spacing } from '../theme/theme';
 import { useGoalStore } from '../store/goalStore';
 import { Goal, GoalRecurrence } from '../types';
@@ -66,19 +64,13 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
   const [reminderTime, setReminderTime] = useState<Date>(new Date());
   const [recurrence, setRecurrence] = useState<GoalRecurrence>('none');
   const [showTimePicker, setShowTimePicker] = useState(false);
-
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
 
   const inputRef = useRef<TextInput>(null);
-
   const addGoal = useGoalStore(state => state.addGoal);
-
   const updateGoal = useGoalStore(state => state.updateGoal);
-
   const backdropOpacity = useRef(new Animated.Value(0)).current;
-
   const sheetTranslateY = useRef(new Animated.Value(500)).current;
-
   const isEditing = goal !== null;
 
   useEffect(() => {
@@ -142,7 +134,6 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
    * Updates recurrence settings and initializes
    * the appropriate recurrence days when needed.
    */
-
   const handleRecurrenceChange = (value: GoalRecurrence) => {
     if (value === recurrence) {
       return;
@@ -278,10 +269,7 @@ export function AddGoalSheet({ visible, onClose, date, goal }: Props) {
       animationType="none"
       onRequestClose={handleClose}
     >
-      <KeyboardAvoidingView
-        style={styles.overlay}
-        behavior="padding"
-      >
+      <KeyboardAvoidingView style={styles.overlay} behavior="padding">
         <Animated.View
           style={[
             styles.backdropContainer,

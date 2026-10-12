@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-
 import {
   Animated,
   Dimensions,
@@ -9,9 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
-
 import { ChevronLeft, ChevronRight, X } from 'lucide-react-native';
-
 import { Goal } from '../types';
 import { colors, radius, spacing } from '../theme/theme';
 import {
@@ -30,7 +27,6 @@ interface Props {
 }
 
 const SHEET_HEIGHT = Dimensions.get('window').height;
-
 const ANIMATION_DURATION = 220;
 
 /**
@@ -82,17 +78,12 @@ export function CalendarSheet({
   );
 
   const backdropOpacity = useRef(new Animated.Value(0)).current;
-
   const sheetTranslateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
 
   const year = displayMonth.getFullYear();
-
   const month = displayMonth.getMonth();
-
   const daysInMonth = getDaysInMonth(year, month);
-
   const firstDay = getFirstDayOfMonth(year, month);
-
   const monthName = displayMonth.toLocaleDateString(undefined, {
     month: 'long',
     year: 'numeric',

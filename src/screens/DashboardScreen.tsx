@@ -1,19 +1,13 @@
 import React, { useMemo, useState } from 'react';
-
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-
 import { Calendar, Plus } from 'lucide-react-native';
-
 import { GoalCard } from '../components/GoalCard';
 import { WeekStrip } from '../components/WeekStrip';
 import { AddGoalSheet } from '../components/AddGoalSheet';
-
 import { ViewMode, ViewToggle } from '../components/ViewToggle';
 import { GoalBoard } from '../components/GoalBoard';
-
 import { useGoalStore } from '../store/goalStore';
 import { Goal } from '../types/Goal';
-
 import { colors, radius, spacing } from '../theme/theme';
 import { CalendarSheet } from '../components/CalendarSheet';
 import { toDateKey } from '../utils/date';
@@ -30,36 +24,25 @@ function formatDate(date: Date) {
 
 export function DashboardScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
-
   const [sheetVisible, setSheetVisible] = useState(false);
-
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
-
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-
   const [calendarVisible, setCalendarVisible] = useState(false);
 
   const goals = useGoalStore(state => state.goals);
-
   const setGoalStatus = useGoalStore(state => state.setGoalStatus);
-
   const deleteGoal = useGoalStore(state => state.deleteGoal);
-
   const dateKey = useMemo(() => toDateKey(selectedDate), [selectedDate]);
-
   const todaysGoals = useMemo(
     () => goals.filter(goal => occursOnDate(goal, selectedDate)),
     [goals, selectedDate],
   );
-
   const completedCount = todaysGoals.filter(
     goal => goal.dailyStatus[dateKey] === 'done',
   ).length;
-
   const doingCount = todaysGoals.filter(
     goal => goal.dailyStatus[dateKey] === 'doing',
   ).length;
-
   const progress =
     todaysGoals.length === 0 ? 0 : completedCount / todaysGoals.length;
 
