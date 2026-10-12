@@ -15,7 +15,7 @@
     "type": "modules",
     "jsSrcsDir": "src/native",
     "android": {
-      "javaPackageName": "com.tamarack.cue"
+      "javaPackageName": "com.tamarackstudios.cue"
     }
   },
   "dependencies": {

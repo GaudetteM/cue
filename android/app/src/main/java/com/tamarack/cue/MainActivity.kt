@@ -1,4 +1,4 @@
-package com.tamarack.cue
+package com.tamarackstudios.cue
 
 import android.content.Intent
 import com.facebook.react.ReactActivity

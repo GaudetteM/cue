@@ -1,4 +1,4 @@
-package com.tamarack.cue
+package com.tamarackstudios.cue
 
 import com.facebook.react.BaseReactPackage
 import com.facebook.react.bridge.NativeModule

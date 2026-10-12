@@ -1,4 +1,4 @@
-package com.tamarack.cue
+package com.tamarackstudios.cue
 
 import android.Manifest
 import android.app.PendingIntent

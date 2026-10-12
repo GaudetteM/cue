@@ -1,4 +1,4 @@
-package com.tamarack.cue
+package com.tamarackstudios.cue
 
 import android.app.AlarmManager
 import android.app.NotificationChannel
